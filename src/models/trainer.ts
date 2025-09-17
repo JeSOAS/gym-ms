@@ -1,4 +1,3 @@
-// src/models/trainer.ts
 import { Schema, models, model } from "mongoose";
 
 const TrainerSchema = new Schema({

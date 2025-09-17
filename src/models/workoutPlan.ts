@@ -1,4 +1,3 @@
-// src/models/workoutPlan.ts
 import { Schema, models, model } from "mongoose";
 
 const ExerciseSchema = new Schema({

@@ -1,4 +1,3 @@
-// src/models/member.ts
 import { Schema, models, model } from "mongoose";
 const AttendanceSchema = new Schema({
   date: { type: Date, required: true, default: Date.now },
