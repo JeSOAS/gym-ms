@@ -1,28 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDB } from "@/lib/db";
+import { z } from "zod";
 import Trainer from "@/models/trainer";
+import { connectToDB } from "@/lib/db";
 
-export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
+const TrainerUpdateSchema = z.object({
+  name: z.string().min(1).max(30).optional(),
+  specialization: z.string().min(1).max(50).optional(),
+});
+
+type Ctx = { params: { id: string } };
+
+export async function GET(_req: NextRequest, { params }: Ctx) {
   await connectToDB();
-  const item = await Trainer.findById(id).populate("clients", "name email").lean();
-  if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(item);
+  const doc = await Trainer.findById(params.id).lean();
+  if (!doc) return new NextResponse("Not found", { status: 404 });
+  return NextResponse.json(doc);
 }
 
-export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  await connectToDB();
+export async function PATCH(req: NextRequest, { params }: Ctx) {
   const body = await req.json();
-  const updated = await Trainer.findByIdAndUpdate(id, body, { new: true });
-  if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const parsed = TrainerUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(z.treeifyError(parsed.error), { status: 400 });
+  }
+  await connectToDB();
+  const updated = await Trainer.findByIdAndUpdate(params.id, parsed.data, { new: true }).lean();
+  if (!updated) return new NextResponse("Not found", { status: 404 });
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
+export async function DELETE(_req: NextRequest, { params }: Ctx) {
   await connectToDB();
-  const deleted = await Trainer.findByIdAndDelete(id);
-  if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ ok: true });
+  const deleted = await Trainer.findByIdAndDelete(params.id).lean();
+  if (!deleted) return new NextResponse("Not found", { status: 404 });
+  return new NextResponse(null, { status: 204 });
 }
