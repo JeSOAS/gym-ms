@@ -26,7 +26,6 @@ export default function TrainersPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Trainers</h1>
-      {/* form … unchanged */}
       <ul className="space-y-2">
         {items.map((t) => (
           <li key={t._id} className="border p-3 rounded">

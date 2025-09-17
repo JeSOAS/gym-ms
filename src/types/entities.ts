@@ -1,4 +1,4 @@
-export type membershipType = "basic" | "standard" | "premium";
+export type MembershipType = "basic" | "standard" | "premium";
 
 export type Attendance = {
     date: string;
@@ -12,7 +12,7 @@ export type MemberLite = {
 }
 
 export type Member = MemberLite & {
-    membershipType: membershipType;
+    membershipType: MembershipType;
     ettendanceLog: Attendance[];
 }
 
@@ -32,7 +32,7 @@ export type Excercise = {
 export type WorkoutPlan = {
     _id: string;
     planId: string;
-    excercises: Excercise[];
-    trainderId: Trainer | string;
+    exercises: Excercise[];
+    trainerId: Trainer | string;
     memberId: Member | string;
 }

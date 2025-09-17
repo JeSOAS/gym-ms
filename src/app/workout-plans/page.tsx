@@ -39,7 +39,6 @@ export default function WorkoutPlansPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Workout Plans</h1>
-      {/* form … unchanged */}
       <ul className="space-y-2">
         {items.map((p) => (
           <li key={p._id} className="border p-3 rounded">

@@ -28,7 +28,6 @@ export default function MembersPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Members</h1>
-      {/* form … unchanged */}
       <ul className="space-y-2">
         {items.map((m) => (
           <li key={m._id} className="border p-3 rounded">
