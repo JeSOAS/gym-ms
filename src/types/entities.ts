@@ -1,38 +1,36 @@
 export type MembershipType = "basic" | "standard" | "premium";
 
-export type Attendance = {
-    date: string;
-    note?: string;
-}
-
 export type MemberLite = {
-    _id: string; 
-    name: string; 
-    email: string;
-}
+  _id: string;
+  name: string;
+  email: string;
+};
 
 export type Member = MemberLite & {
-    membershipType: MembershipType;
-    ettendanceLog: Attendance[];
-}
+  membershipType: MembershipType;
+  planStartAt?: string;
+  planEndAt?: string;
+};
 
 export type Trainer = {
-    _id: string;
-    name: string;
-    specialization: string;
-    clients: MemberLite[];
-}
+  _id: string;
+  name: string;
+  specialization: string;
+  clients: MemberLite[];
+};
 
-export type Excercise = {
-    name: string; 
-    sets?: number; 
-    reps?: number;
-}
+export type Exercise = {
+  name: string;
+  sets?: number;
+  reps?: number;
+};
+
+export type Excercise = Exercise;
 
 export type WorkoutPlan = {
-    _id: string;
-    planId: string;
-    exercises: Excercise[];
-    trainerId: Trainer | string;
-    memberId: Member | string;
-}
+  _id: string;
+  planId: string;
+  exercises: Exercise[];
+  trainerId: Trainer | string;
+  memberId: Member | string;
+};
