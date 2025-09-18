@@ -1,31 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDB } from "@/lib/db";
+import { z } from "zod";
 import WorkoutPlan from "@/models/workoutPlan";
+import Member from "@/models/member";
+import Trainer from "@/models/trainer";
+import { connectToDB } from "@/lib/db";
 
-export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
+const ExerciseSchema = z.object({
+  name: z.string().min(1),
+  sets: z.number().int().min(0).optional(),
+  reps: z.number().int().min(0).optional(),
+});
+
+const UpdateSchema = z.object({
+  planId: z.string().min(1).max(50).optional(),
+  trainerId: z.string().min(1).optional(),
+  memberId: z.string().min(1).optional(),
+  exercises: z.array(ExerciseSchema).optional(),
+});
+
+type Ctx = { params: { id: string } };
+
+export async function GET(_req: NextRequest, { params }: Ctx) {
   await connectToDB();
-  const item = await WorkoutPlan.findById(id)
+  const doc = await WorkoutPlan.findById(params.id)
     .populate("trainerId", "name specialization")
-    .populate("memberId", "name email")
+    .populate("memberId", "name membershipType")
     .lean();
-  if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(item);
+  if (!doc) return new NextResponse("Not found", { status: 404 });
+  return NextResponse.json(doc);
 }
 
-export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  await connectToDB();
+export async function PATCH(req: NextRequest, { params }: Ctx) {
   const body = await req.json();
-  const updated = await WorkoutPlan.findByIdAndUpdate(id, body, { new: true });
-  if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const parsed = UpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(z.treeifyError(parsed.error), { status: 400 });
+  }
+  await connectToDB();
+
+  // validate relational updates if present
+  if (parsed.data.trainerId) {
+    const t = await Trainer.findById(parsed.data.trainerId).lean();
+    if (!t) return new NextResponse("Trainer not found", { status: 400 });
+  }
+  if (parsed.data.memberId) {
+    const m = await Member.findById(parsed.data.memberId).lean();
+    if (!m) return new NextResponse("Member not found", { status: 400 });
+  }
+
+  const updated = await WorkoutPlan.findByIdAndUpdate(params.id, parsed.data, { new: true })
+    .populate("trainerId", "name specialization")
+    .populate("memberId", "name membershipType")
+    .lean();
+  if (!updated) return new NextResponse("Not found", { status: 404 });
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
+export async function DELETE(_req: NextRequest, { params }: Ctx) {
   await connectToDB();
-  const deleted = await WorkoutPlan.findByIdAndDelete(id);
-  if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ ok: true });
+  const deleted = await WorkoutPlan.findByIdAndDelete(params.id).lean();
+  if (!deleted) return new NextResponse("Not found", { status: 404 });
+  return new NextResponse(null, { status: 204 });
 }

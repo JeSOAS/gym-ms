@@ -25,8 +25,6 @@ export type Exercise = {
   reps?: number;
 };
 
-export type Excercise = Exercise;
-
 export type WorkoutPlan = {
   _id: string;
   planId: string;
