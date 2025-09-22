@@ -7,6 +7,12 @@ type MemberWithPlan = Member & {
   planEndAt?: string;
 };
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || ""; // e.g. "/gym-ms"
+const api = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${BASE}${p}`;
+};
+
 export default function MembersPage() {
   const [items, setItems] = useState<MemberWithPlan[]>([]);
   const [loading, setLoading] = useState(false);
@@ -101,7 +107,7 @@ export default function MembersPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/members", { cache: "no-store" });
+      const res = await fetch(api("/api/members"), { cache: "no-store" });
       const data = (await res.json()) as MemberWithPlan[];
       setItems(data);
     } finally {
@@ -115,7 +121,6 @@ export default function MembersPage() {
   async function create(e: React.FormEvent) {
     e.preventDefault();
 
-    // Length restraints
     if (form.name.length > 30) {
       alert("Name must be 30 characters or fewer.");
       return;
@@ -132,7 +137,7 @@ export default function MembersPage() {
       planEndAt: endISOFromStart(start),
     };
 
-    const res = await fetch("/api/members", {
+    const res = await fetch(api("/api/members"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -160,7 +165,6 @@ export default function MembersPage() {
   }
 
   async function saveEdit(id: string) {
-    // Length restraints
     if (editForm.name.length > 30) {
       alert("Name must be 30 characters or fewer.");
       return;
@@ -177,7 +181,7 @@ export default function MembersPage() {
       planEndAt: endISOFromStart(start),
     };
 
-    const res = await fetch(`/api/members/${id}`, {
+    const res = await fetch(api(`/api/members/${id}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -195,17 +199,20 @@ export default function MembersPage() {
     const ok = window.confirm("Are you sure?");
     if (!ok) return;
 
-    const plansRes = await fetch("/api/workout-plans", { cache: "no-store" });
+    // delete this member's plans first
+    const plansRes = await fetch(api("/api/workout-plans"), { cache: "no-store" });
     if (plansRes.ok) {
       const plans = (await plansRes.json()) as WorkoutPlan[];
       const mine = plans.filter((p) => {
         const mid = typeof p.memberId === "string" ? p.memberId : p.memberId?._id;
         return mid === id;
       });
-      await Promise.all(mine.map((p) => fetch(`/api/workout-plans/${p._id}`, { method: "DELETE" })));
+      await Promise.all(
+        mine.map((p) => fetch(api(`/api/workout-plans/${p._id}`), { method: "DELETE" }))
+      );
     }
 
-    const res = await fetch(`/api/members/${id}`, { method: "DELETE" });
+    const res = await fetch(api(`/api/members/${id}`), { method: "DELETE" });
     if (!res.ok) {
       const msg = await safeText(res);
       alert(`Delete failed: ${msg}`);
@@ -224,6 +231,7 @@ export default function MembersPage() {
     <div className="container stack-lg">
       <h1 className="title-xl">Members</h1>
 
+      {/* Create */}
       <form onSubmit={create} className="card stack-sm">
         <div className="title-md">Create Member</div>
         <input
@@ -297,6 +305,7 @@ export default function MembersPage() {
         <button className="btn btn-primary">Create</button>
       </form>
 
+      {/* List */}
       <div className="stack-sm">
         <div className="text-muted small">{loading ? "Loading..." : `Total: ${items.length}`}</div>
         {items.map((m) => {
@@ -372,18 +381,10 @@ export default function MembersPage() {
                   </div>
 
                   <div className="hstack gap-sm">
-                    <button
-                      type="button"
-                      onClick={() => void saveEdit(m._id)}
-                      className="btn btn-primary"
-                    >
+                    <button type="button" onClick={() => void saveEdit(m._id)} className="btn btn-primary">
                       Save
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingId(null)}
-                      className="btn"
-                    >
+                    <button type="button" onClick={() => setEditingId(null)} className="btn">
                       Cancel
                     </button>
                   </div>
@@ -404,12 +405,8 @@ export default function MembersPage() {
                     </div>
                   </div>
                   <div className="hstack gap-sm">
-                    <button onClick={() => startEdit(m)} className="btn">
-                      Edit
-                    </button>
-                    <button onClick={() => void remove(m._id)} className="btn btn-danger">
-                      Delete
-                    </button>
+                    <button onClick={() => startEdit(m)} className="btn">Edit</button>
+                    <button onClick={() => void remove(m._id)} className="btn btn-danger">Delete</button>
                   </div>
                 </div>
               )}

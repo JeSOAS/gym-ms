@@ -4,6 +4,12 @@ import type { WorkoutPlan, Member, Trainer } from "@/types/entities";
 
 type ExerciseRow = { name: string; sets?: number; reps?: number };
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || ""; // e.g. "/gym-ms"
+const api = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${BASE}${p}`;
+};
+
 export default function WorkoutPlansPage() {
   const [items, setItems] = useState<WorkoutPlan[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -39,9 +45,9 @@ export default function WorkoutPlansPage() {
     setLoading(true);
     try {
       const [plansRes, memRes, trRes] = await Promise.all([
-        fetch("/api/workout-plans", { cache: "no-store" }),
-        fetch("/api/members", { cache: "no-store" }),
-        fetch("/api/trainers", { cache: "no-store" }),
+        fetch(api("/api/workout-plans"), { cache: "no-store" }),
+        fetch(api("/api/members"), { cache: "no-store" }),
+        fetch(api("/api/trainers"), { cache: "no-store" }),
       ]);
       setItems((await plansRes.json()) as WorkoutPlan[]);
       setMembers((await memRes.json()) as Member[]);
@@ -56,7 +62,7 @@ export default function WorkoutPlansPage() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    const res = await fetch("/api/workout-plans", {
+    const res = await fetch(api("/api/workout-plans"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
@@ -66,7 +72,12 @@ export default function WorkoutPlansPage() {
       alert(`Create failed: ${msg}`);
       return;
     }
-    setForm({ planId: "", trainerId: "", memberId: "", exercises: [{ name: "Squat", sets: 5, reps: 5 }] });
+    setForm({
+      planId: "",
+      trainerId: "",
+      memberId: "",
+      exercises: [{ name: "Squat", sets: 5, reps: 5 }],
+    });
     void load();
   }
 
@@ -81,7 +92,7 @@ export default function WorkoutPlansPage() {
   }
 
   async function saveEdit(id: string) {
-    const res = await fetch(`/api/workout-plans/${id}`, {
+    const res = await fetch(api(`/api/workout-plans/${id}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(editForm),
@@ -98,7 +109,7 @@ export default function WorkoutPlansPage() {
   async function remove(id: string) {
     const ok = window.confirm("Are you sure you want to delete this workout plan?");
     if (!ok) return;
-    const res = await fetch(`/api/workout-plans/${id}`, { method: "DELETE" });
+    const res = await fetch(api(`/api/workout-plans/${id}`), { method: "DELETE" });
     if (!res.ok) {
       const msg = await safeText(res);
       alert(`Delete failed: ${msg}`);
@@ -107,11 +118,7 @@ export default function WorkoutPlansPage() {
     void load();
   }
 
-  function setExercise<T extends "form" | "edit">(
-    which: T,
-    idx: number,
-    patch: Partial<ExerciseRow>
-  ) {
+  function setExercise<T extends "form" | "edit">(which: T, idx: number, patch: Partial<ExerciseRow>) {
     if (which === "form") {
       const next = [...form.exercises];
       next[idx] = { ...next[idx], ...patch };
@@ -124,11 +131,9 @@ export default function WorkoutPlansPage() {
   }
 
   function addExercise(which: "form" | "edit") {
-    if (which === "form") {
-      setForm({ ...form, exercises: [...form.exercises, { name: "", sets: undefined, reps: undefined }] });
-    } else {
-      setEditForm({ ...editForm, exercises: [...editForm.exercises, { name: "", sets: undefined, reps: undefined }] });
-    }
+    const row = { name: "", sets: undefined, reps: undefined };
+    if (which === "form") setForm({ ...form, exercises: [...form.exercises, row] });
+    else setEditForm({ ...editForm, exercises: [...editForm.exercises, row] });
   }
 
   function removeExercise(which: "form" | "edit", idx: number) {
@@ -196,7 +201,9 @@ export default function WorkoutPlansPage() {
                 min={0}
                 placeholder="Sets"
                 value={ex.sets ?? ""}
-                onChange={(e) => setExercise("form", i, { sets: e.target.value === "" ? undefined : Number(e.target.value) })}
+                onChange={(e) =>
+                  setExercise("form", i, { sets: e.target.value === "" ? undefined : Number(e.target.value) })
+                }
               />
               <input
                 className="input"
@@ -204,7 +211,9 @@ export default function WorkoutPlansPage() {
                 min={0}
                 placeholder="Reps"
                 value={ex.reps ?? ""}
-                onChange={(e) => setExercise("form", i, { reps: e.target.value === "" ? undefined : Number(e.target.value) })}
+                onChange={(e) =>
+                  setExercise("form", i, { reps: e.target.value === "" ? undefined : Number(e.target.value) })
+                }
               />
               <button type="button" className="btn" onClick={() => removeExercise("form", i)}>
                 Remove
@@ -275,7 +284,9 @@ export default function WorkoutPlansPage() {
                         min={0}
                         placeholder="Sets"
                         value={ex.sets ?? ""}
-                        onChange={(e) => setExercise("edit", i, { sets: e.target.value === "" ? undefined : Number(e.target.value) })}
+                        onChange={(e) =>
+                          setExercise("edit", i, { sets: e.target.value === "" ? undefined : Number(e.target.value) })
+                        }
                       />
                       <input
                         className="input"
@@ -283,7 +294,9 @@ export default function WorkoutPlansPage() {
                         min={0}
                         placeholder="Reps"
                         value={ex.reps ?? ""}
-                        onChange={(e) => setExercise("edit", i, { reps: e.target.value === "" ? undefined : Number(e.target.value) })}
+                        onChange={(e) =>
+                          setExercise("edit", i, { reps: e.target.value === "" ? undefined : Number(e.target.value) })
+                        }
                       />
                       <button type="button" className="btn" onClick={() => removeExercise("edit", i)}>
                         Remove
@@ -309,7 +322,7 @@ export default function WorkoutPlansPage() {
                 <div>
                   <div className="semibold">{p.planId}</div>
                   <div className="small">
-                    Trainer: {typeof p.trainerId === "string" ? p.trainerId : p.trainerId?.name || "—"} —
+                    Trainer: {typeof p.trainerId === "string" ? p.trainerId : p.trainerId?.name || "—"} —{" "}
                     Member: {typeof p.memberId === "string" ? p.memberId : p.memberId?.name || "—"}
                   </div>
                   <div className="xsmall muted mt-1">
@@ -322,12 +335,8 @@ export default function WorkoutPlansPage() {
                   </div>
                 </div>
                 <div className="hstack gap-sm">
-                  <button className="btn" onClick={() => startEdit(p)}>
-                    Edit
-                  </button>
-                  <button className="btn btn-danger" onClick={() => void remove(p._id)}>
-                    Delete
-                  </button>
+                  <button className="btn" onClick={() => startEdit(p)}>Edit</button>
+                  <button className="btn btn-danger" onClick={() => void remove(p._id)}>Delete</button>
                 </div>
               </div>
             )}

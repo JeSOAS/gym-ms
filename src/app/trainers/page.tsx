@@ -2,6 +2,12 @@
 import { useEffect, useState } from "react";
 import type { Trainer } from "@/types/entities";
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || ""; // e.g. "/gym-ms"
+const api = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${BASE}${p}`;
+};
+
 export default function TrainersPage() {
   const [items, setItems] = useState<Trainer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,7 +26,7 @@ export default function TrainersPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/trainers", { cache: "no-store" });
+      const res = await fetch(api("/api/trainers"), { cache: "no-store" });
       const data = (await res.json()) as Trainer[];
       setItems(data);
     } finally {
@@ -33,7 +39,7 @@ export default function TrainersPage() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    const res = await fetch("/api/trainers", {
+    const res = await fetch(api("/api/trainers"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
@@ -53,7 +59,7 @@ export default function TrainersPage() {
   }
 
   async function saveEdit(id: string) {
-    const res = await fetch(`/api/trainers/${id}`, {
+    const res = await fetch(api(`/api/trainers/${id}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(editForm),
@@ -70,7 +76,7 @@ export default function TrainersPage() {
   async function remove(id: string) {
     const ok = window.confirm("Are you sure?");
     if (!ok) return;
-    const res = await fetch(`/api/trainers/${id}`, { method: "DELETE" });
+    const res = await fetch(api(`/api/trainers/${id}`), { method: "DELETE" });
     if (!res.ok) {
       const msg = await safeText(res);
       alert(`Delete failed: ${msg}`);
@@ -118,18 +124,10 @@ export default function TrainersPage() {
                   onChange={(e) => setEditForm({ ...editForm, specialization: e.target.value })}
                 />
                 <div className="hstack gap-sm">
-                  <button
-                    type="button"
-                    onClick={() => void saveEdit(t._id)}
-                    className="btn btn-primary"
-                  >
+                  <button type="button" onClick={() => void saveEdit(t._id)} className="btn btn-primary">
                     Save
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingId(null)}
-                    className="btn"
-                  >
+                  <button type="button" onClick={() => setEditingId(null)} className="btn">
                     Cancel
                   </button>
                 </div>
@@ -141,12 +139,8 @@ export default function TrainersPage() {
                   <div className="small muted">{t.specialization}</div>
                 </div>
                 <div className="hstack gap-sm">
-                  <button onClick={() => startEdit(t)} className="btn">
-                    Edit
-                  </button>
-                  <button onClick={() => void remove(t._id)} className="btn btn-danger">
-                    Delete
-                  </button>
+                  <button onClick={() => startEdit(t)} className="btn">Edit</button>
+                  <button onClick={() => void remove(t._id)} className="btn btn-danger">Delete</button>
                 </div>
               </div>
             )}
