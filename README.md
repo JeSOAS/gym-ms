@@ -8,8 +8,8 @@
 The **Gym Membership System** is a full-stack web application built with **Next.js** and **MongoDB**.  
 It manages essential entities for a gym environment:
 
-- **Members**: Register new members, update details, and log attendance.  
-- **Trainers**: Add trainers, assign clients, and manage their profiles.  
+- **Members**: Register new members, update details, and log attendance.
+- **Trainers**: Add trainers, assign clients, and manage their profiles.
 - **Workout Plans**: Create and assign workout plans linking trainers and members.
 
 ### Features
@@ -23,13 +23,13 @@ It manages essential entities for a gym environment:
 ## Screenshots
 
 - **Home Page**  
-  ![Home Page](./screenshots/)
+  ![Home Page](./public/gymms_index.png)
 
 - **Members Page**  
-  ![Members Page](./screenshots/)
+  ![Members Page](./public/gymms_members.png)
 
 - **Trainers Page**  
-  ![Trainers Page](./screenshots/)
+  ![Trainers Page](./public/gymms_trainers.png)
 
 - **Workout Plans Page**  
-  ![Workout Plans Page](./screenshots/)
+  ![Workout Plans Page](./public/gymms_workout_plans.png)
